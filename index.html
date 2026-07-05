@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ふれあい いご（13ろばん）</title>
+<style>
+  /* ===== いろ と かたち のせってい ===== */
+  :root{
+    --bg1:#eef3e3;          /* せいと画面のはいけい（まっちゃ色っぽい） */
+    --bg2:#e3ecd6;
+    --wood1:#f0c884;        /* 碁ばんの木の色（あかるい） */
+    --wood2:#e0a95a;
+    --wood-line:#7a5023;    /* 碁ばんの線 */
+    --shu:#e8552b;          /* しゅ色（ボタン・アクセント） */
+    --shu-dark:#c33f1c;
+    --navy:#26374d;         /* くろばん用のこい色 */
+    --cream:#fff8ec;        /* しろばん用のあかるい色 */
+    --ink:#2b2b2b;
+    --stone-black:#2c2c2c;
+    --stone-white:#fdfdfb;
+    --shadow:rgba(70,45,15,.28);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Yu Gothic","YuGothic","M PLUS Rounded 1c","Rounded Mplus 1c","Meiryo",sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--ink);
+    display:flex; flex-direction:column; align-items:center;
+    padding:14px 12px 28px;
+    min-height:100%;
+    user-select:none; -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+
+  .title{
+    font-size:clamp(18px,4.5vw,26px);
+    font-weight:800;
+    color:var(--shu-dark);
+    letter-spacing:.04em;
+    margin:2px 0 10px;
+    text-shadow:0 1px 0 #fff;
+  }
+  .title small{font-weight:700; color:#7a5b2e; font-size:.62em; margin-left:.3em;}
+
+  /* ===== タブ（ふたりで / コンピュータと） ===== */
+  .tabs{
+    display:flex; gap:8px; width:100%; max-width:560px; margin-bottom:10px;
+  }
+  .tab{
+    flex:1; appearance:none; cursor:pointer; font-family:inherit;
+    font-size:clamp(16px,4vw,20px); font-weight:800; color:#8a6a34;
+    background:#f6ecd7; border:3px solid #e6d3ac; border-radius:16px 16px 6px 6px;
+    padding:12px 8px; min-height:52px; touch-action:manipulation;
+    transition:transform .06s, background .2s, color .2s, border-color .2s;
+  }
+  .tab.active{ background:var(--shu); color:#fff; border-color:var(--shu-dark); box-shadow:0 4px 0 var(--shu-dark); }
+  .tab:not(.active):active{ transform:translateY(2px); }
+
+  /* hidden（かくす）を ちゃんと きかせる。
+     .options / .practice は display:flex なので、そのままだと hidden が
+     まけて つねに 出てしまう。タブごとに 必要な部分だけ 出すための ルール。 */
+  [hidden]{ display:none !important; }
+
+  /* ===== コンピュータ設定 ===== */
+  .options{
+    width:100%; max-width:560px; margin:0 0 10px;
+    background:#fff8ec; border:3px solid #ecdcbb; border-radius:16px;
+    padding:10px 12px; display:flex; flex-direction:column; gap:10px;
+  }
+  .opt-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .opt-label{ font-weight:800; color:#7a5b2e; font-size:clamp(15px,3.6vw,17px); min-width:5.2em; }
+  .seg{ display:flex; gap:6px; flex:1; }
+  .seg-btn{
+    flex:1; appearance:none; cursor:pointer; font-family:inherit;
+    font-size:clamp(14px,3.4vw,16px); font-weight:800; color:#6b5227;
+    background:#fff; border:2px solid #e2cfa6; border-radius:12px;
+    padding:10px 6px; min-height:46px; touch-action:manipulation;
+    transition:transform .06s, background .15s, color .15s, border-color .15s;
+  }
+  .seg-btn.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .seg-btn:not(.active):active{ transform:translateY(2px); }
+
+  /* ===== れんしゅう バー ===== */
+  .practice{
+    width:100%; max-width:560px; margin:0 0 10px;
+    display:flex; flex-direction:column; align-items:stretch; gap:10px;
+    background:#fff8ec; border:3px solid #ecdcbb; border-radius:16px; padding:10px 12px;
+  }
+  /* とる／にげる の きりかえ */
+  .p-type{ display:flex; gap:6px; }
+  .p-type .seg-btn{ flex:1; }
+  /* せいかいかず と ボタン の れつ */
+  .p-row2{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .p-count{ font-weight:800; color:#7a5b2e; font-size:clamp(15px,3.8vw,18px); }
+  .p-count span{ color:var(--shu-dark); font-size:1.25em; }
+  .p-btns{ display:flex; gap:8px; flex:1; justify-content:flex-end; }
+  .pbtn{
+    appearance:none; cursor:pointer; font-family:inherit; font-weight:800;
+    font-size:clamp(14px,3.6vw,17px); color:#6b5227;
+    background:#fff; border:2px solid #e2cfa6; border-radius:12px;
+    padding:10px 14px; min-height:46px; touch-action:manipulation;
+    transition:transform .06s;
+  }
+  .pbtn.next{ background:var(--shu); color:#fff; border-color:var(--shu-dark); box-shadow:0 3px 0 var(--shu-dark); }
+  .pbtn:active{ transform:translateY(2px); }
+
+  /* れんしゅうの ヒント：こたえを ひからせる まる */
+  .hint-mark{
+    fill:none; stroke:#2fb36b; stroke-width:4; opacity:.9;
+    animation:hintpulse 1s ease-in-out infinite;
+  }
+  @keyframes hintpulse{ 0%,100%{opacity:.25;} 50%{opacity:1;} }
+
+  /* ===== てばん の おおきなひょうじ ===== */
+  .banner{
+    width:100%; max-width:560px;
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    padding:12px 18px;
+    border-radius:22px;
+    font-size:clamp(22px,6vw,34px);
+    font-weight:800;
+    box-shadow:0 5px 0 rgba(0,0,0,.10);
+    transition:background .25s, color .25s, transform .15s;
+  }
+  .banner.black{background:var(--navy); color:#fff;}
+  .banner.white{background:var(--cream); color:#3a2c14; border:3px solid #d9c49b;}
+  .banner .dot{
+    width:1.05em; height:1.05em; border-radius:50%; flex:none;
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.35), 0 2px 3px rgba(0,0,0,.35);
+  }
+  .banner.black .dot{background:radial-gradient(circle at 35% 30%,#6a6a6a,#171717 70%);}
+  .banner.white .dot{background:radial-gradient(circle at 35% 30%,#ffffff,#cfc6b4 80%); border:1px solid #b8ab8c;}
+
+  /* ===== 碁ばん ===== */
+  .board-wrap{
+    position:relative;
+    width:100%; max-width:560px;
+    margin:14px 0 6px;
+    border-radius:20px;
+    padding:10px;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 55%),
+      linear-gradient(150deg,var(--wood1),var(--wood2));
+    box-shadow:0 10px 0 rgba(120,80,20,.30), 0 14px 26px rgba(80,50,10,.28);
+  }
+  svg{display:block; width:100%; height:auto; touch-action:none;}
+  .grid-line{stroke:var(--wood-line); stroke-width:1.4; stroke-linecap:round;}
+  .grid-line.edge{stroke-width:2.4;}
+  .star{fill:var(--wood-line);}
+  .stone{}
+  .last-mark{fill:none; stroke:var(--shu); stroke-width:2.6;}
+  .hit{fill:transparent; cursor:pointer;}
+
+  /* ===== ヒント（そこにはおけないよ等） ===== */
+  .hint{
+    min-height:1.6em; margin:8px 0 4px;
+    font-size:clamp(15px,3.6vw,19px); font-weight:700; color:var(--shu-dark);
+    transition:opacity .2s; opacity:0;
+  }
+  .hint.show{opacity:1;}
+
+  /* ===== ボタン ===== */
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    font-family:inherit; font-weight:800;
+    font-size:clamp(18px,4.8vw,22px);
+    color:#fff; background:var(--shu);
+    padding:14px 30px; border-radius:18px;
+    box-shadow:0 5px 0 var(--shu-dark);
+    transition:transform .08s, box-shadow .08s;
+    min-height:58px; touch-action:manipulation;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--shu-dark);}
+  /* かち画面の ボタンならび（もういちど／リプレイ） */
+  .ov-btns{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .btn.btn2{ background:var(--navy); box-shadow:0 5px 0 #16222f; }
+  .btn.btn2:active{ box-shadow:0 1px 0 #16222f; }
+
+  /* ===== かち！ のおおきなひょうじ ===== */
+  .overlay{
+    position:absolute; inset:0; border-radius:20px;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; text-align:center;
+    background:rgba(255,250,238,.90);
+    backdrop-filter:blur(2px);
+  }
+  .overlay.show{display:flex; animation:fade .3s ease;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+  .win-text{
+    font-size:clamp(34px,9vw,54px); font-weight:900;
+    color:var(--shu-dark); text-shadow:0 2px 0 #fff;
+    animation:bounce .6s ease;
+  }
+  .win-text .stone-ico{
+    display:inline-block; width:.9em; height:.9em; border-radius:50%;
+    vertical-align:-.12em; margin-right:.15em;
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.4),0 2px 4px rgba(0,0,0,.35);
+  }
+  .win-text .b{background:radial-gradient(circle at 35% 30%,#6a6a6a,#171717 70%);}
+  .win-text .w{background:radial-gradient(circle at 35% 30%,#fff,#cbc2b0 80%); border:1px solid #b8ab8c;}
+  @keyframes bounce{0%{transform:scale(.3);}55%{transform:scale(1.15);}100%{transform:scale(1);}}
+</style>
+</head>
+<body>
+
+  <div class="title">ふれあい いご <small>13ろばん</small></div>
+
+  <!-- あそびかたを えらぶ タブ -->
+  <div class="tabs" role="tablist">
+    <button id="tab-practice" class="tab active" onclick="setMode('practice')">✏️ れんしゅう</button>
+    <button id="tab-cpu"      class="tab"        onclick="setMode('cpu')">🤖 コンピュータと</button>
+    <button id="tab-pvp"      class="tab"        onclick="setMode('pvp')">👫 ふたりで</button>
+  </div>
+
+  <!-- れんしゅう（クイズ）のバー -->
+  <div id="practice-bar" class="practice">
+    <div class="p-type">
+      <button id="pt-capture" class="seg-btn active" onclick="setPracticeType('capture')">🎯 とる</button>
+      <button id="pt-escape"  class="seg-btn"        onclick="setPracticeType('escape')">🏃 にげる</button>
+    </div>
+    <div class="p-row2">
+      <div class="p-count">せいかい <span id="p-correct">0</span>こ</div>
+      <div class="p-btns">
+        <button class="pbtn" onclick="showAnswerHint()">💡 ヒント</button>
+        <button class="pbtn next" onclick="newPuzzle()">つぎの もんだい ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- コンピュータと たいせん のときの せってい -->
+  <div id="cpu-options" class="options" hidden>
+    <div class="opt-row">
+      <span class="opt-label">きみの いし</span>
+      <div class="seg">
+        <button id="c-black" class="seg-btn active" onclick="setHumanColor(1)">⚫ くろ（せんて）</button>
+        <button id="c-white" class="seg-btn"        onclick="setHumanColor(2)">⚪ しろ（ごて）</button>
+      </div>
+    </div>
+    <div class="opt-row">
+      <span class="opt-label">つよさ</span>
+      <div class="seg">
+        <button id="l-easy"   class="seg-btn active" onclick="setLevel('easy')">🙂 やさしい</button>
+        <button id="l-normal" class="seg-btn"        onclick="setLevel('normal')">😀 ふつう</button>
+        <button id="l-hard"   class="seg-btn"        onclick="setLevel('hard')">😤 つよい</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="banner" class="banner black">
+    <span class="dot"></span><span id="banner-text">くろの ばん</span>
+  </div>
+
+  <div class="board-wrap">
+    <svg id="board" viewBox="0 0 568 568" role="img" aria-label="いごの ばん"></svg>
+    <div id="overlay" class="overlay">
+      <div id="win-text" class="win-text"></div>
+      <button class="btn" onclick="resetGame()">もう いちど</button>
+    </div>
+  </div>
+
+  <div id="hint" class="hint"></div>
+
+  <button id="reset-btn" class="btn" onclick="resetGame()">もう いちど（さいしょから）</button>
+
+<script>
+/* =======================================================================
+   ふれあい いご（さきに 石を とったほうが かち）
+   ・くろ が せんて。くろ → しろ → くろ … のじゅんばん。
+   ・あいての 石を 1つでも とったら、おいた人の かち。
+   -----------------------------------------------------------------------
+   ★ あとで CPU をつけられるように、
+     「けいさん（連・呼吸点）」「石をおく処理」「勝敗はんてい」を
+      画面びょうがと わけて つくっています。
+   ======================================================================= */
+
+/* ===== 1. ゲームのじょうたい ===== */
+const SIZE = 13;            // 13ろばん
+const EMPTY = 0, BLACK = 1, WHITE = 2;
+
+let board;                 // board[y][x] = 0(あき)/1(くろ)/2(しろ)
+let currentPlayer;         // いまの てばん（BLACK or WHITE）
+let gameOver;              // ゲームがおわったか
+let winner;                // かった人（BLACK or WHITE）
+let lastMove;              // さいごにおいた場所 {x,y}（しるし用）
+let locked;                // true のあいだは 石を おけない（勝ちの1びょう待ち中など）
+let winTimer = null;       // 「1びょう後に かち」のタイマー
+
+/* あそびかた の せってい */
+let mode = "practice";     // "practice"=れんしゅう / "cpu"=コンピュータと / "pvp"=ふたりで
+let cpuColor = WHITE;      // コンピュータの いろ（きみが くろなら コンピュータは しろ）
+let cpuLevel = "easy";     // "easy"=やさしい / "hard"=つよい
+let cpuTimer = null;       // コンピュータが かんがえる 少しの ま
+
+/* れんしゅう（クイズ）の じょうたい */
+let practiceType = "capture"; // "capture"=とる / "escape"=にげる（まもる）
+let puzzle = null;         // いまの もんだい { board, answer:{x,y}, size, type }
+let puzzleSolved = false;  // せいかい したか
+let correctCount = 0;      // せいかい の かず
+let wrongCount = 0;        // いまの もんだいで まちがえた かず
+let hintOn = false;        // ヒントの しるしを だしているか
+let hintMarkTimer = null;
+
+/* リプレイ（たいせんを あとで もういちど 見る）の じょうたい */
+let history = [];          // うった手のきろく [{x,y,player}, ...]
+let replayActive = false;  // リプレイちゅうか
+let replayTimer = null;    // リプレイの こまおくり タイマー
+let replayMoves = [];      // リプレイでながす手
+let replayStep = 0;        // いま なん手めか
+
+/* =======================================================================
+   2. きほんの けいさん  ―― 連（れん）と 呼吸点（こきゅうてん）
+      ※ここは「盤 bd」をうけとる じゅんすいな計算。CPU からも使えます。
+   ======================================================================= */
+
+// ばんの 中か？
+function inBoard(x, y){
+  return x >= 0 && x < SIZE && y >= 0 && y < SIZE;
+}
+
+// たてよこ の となり（4こ）をかえす
+function neighbors(x, y){
+  const list = [];
+  if (inBoard(x-1, y)) list.push([x-1, y]);
+  if (inBoard(x+1, y)) list.push([x+1, y]);
+  if (inBoard(x, y-1)) list.push([x, y-1]);
+  if (inBoard(x, y+1)) list.push([x, y+1]);
+  return list;
+}
+
+// (sx,sy) の石がぞくする「連」をしらべる。
+//   → { color, stones:[[x,y]...], liberties:Set("x,y") }
+//   liberties.size が「呼吸点のかず」。0なら とられる。
+function getGroup(bd, sx, sy){
+  const color = bd[sy][sx];
+  const stones = [];
+  const liberties = new Set();   // 呼吸点（あいている となり）
+  const seen = new Set();        // しらべた石
+  const stack = [[sx, sy]];
+  seen.add(sx + "," + sy);
+
+  while (stack.length){
+    const [x, y] = stack.pop();
+    stones.push([x, y]);
+    for (const [nx, ny] of neighbors(x, y)){
+      const v = bd[ny][nx];
+      if (v === EMPTY){
+        liberties.add(nx + "," + ny);           // あき → 呼吸点
+      } else if (v === color){
+        const key = nx + "," + ny;
+        if (!seen.has(key)){ seen.add(key); stack.push([nx, ny]); }  // おなじ色 → つながっている
+      }
+    }
+  }
+  return { color, stones, liberties };
+}
+
+/* =======================================================================
+   3. 石をおく処理（ルールの中心）
+      「石をおいたときの処理のじゅんばん」のとおりに 計算します。
+        1) おく（あき でなければ ×）
+        2) あいての 連で 呼吸点0 → とりのぞく。1つでも とれたら かち。
+        3) だれも とれず、じぶんの 連が 呼吸点0 → 自殺手なので もどす。
+   -----------------------------------------------------------------------
+   もどり値: { ok, captured:[...], suicide, occupied }
+     ok=true  … おけた（captured に とった石。0こなら ふつうの一手）
+     ok=false … おけなかった（occupied=すでに石 / suicide=自殺手）
+   ※applyMoveTo は わたされた盤 bd を かきかえます。
+     playMove は じっさいの board に、CPUは コピーばんに つかいます。
+   ======================================================================= */
+function applyMoveTo(bd, x, y, player){
+  // --- 1) おけるか？ ---
+  if (!inBoard(x, y) || bd[y][x] !== EMPTY){
+    return { ok:false, occupied:true };
+  }
+  bd[y][x] = player;                          // 石をおく
+  const opp = (player === BLACK) ? WHITE : BLACK;
+
+  // --- 2) あいての 連をしらべて、呼吸点0なら とる ---
+  const captured = [];
+  for (const [nx, ny] of neighbors(x, y)){
+    if (bd[ny][nx] === opp){
+      const g = getGroup(bd, nx, ny);
+      if (g.liberties.size === 0){
+        for (const [gx, gy] of g.stones){
+          bd[gy][gx] = EMPTY;                 // ばんから とりのぞく
+          captured.push([gx, gy]);
+        }
+      }
+    }
+  }
+  if (captured.length > 0){
+    return { ok:true, captured };             // 1つでも とれた → （よびだし側で かち）
+  }
+
+  // --- 3) だれも とれなかった → 自殺手チェック ---
+  const own = getGroup(bd, x, y);
+  if (own.liberties.size === 0){
+    bd[y][x] = EMPTY;                          // もどす（てばんは かえない）
+    return { ok:false, suicide:true };
+  }
+
+  return { ok:true, captured:[] };            // ふつうに おけた
+}
+
+// じっさいの ばん に うつ
+function playMove(x, y, player){
+  return applyMoveTo(board, x, y, player);
+}
+
+// ばんの コピー（CPUの おためし用）
+function cloneBoard(bd){ return bd.map(row => row.slice()); }
+
+/* =======================================================================
+   4. 一手を すすめる（勝敗はんてい も ここ）
+      画面(タップ)や、あとで CPU から よびだす まど口。
+   ======================================================================= */
+function makeMove(x, y){
+  if (gameOver || locked) return;      // おわり／かちの1びょう待ち中は うけつけない
+
+  const res = playMove(x, y, currentPlayer);
+
+  if (!res.ok){
+    if (res.suicide){
+      showHint("そこには おけないよ（じぶんが とられちゃう）");
+    }
+    // occupied のときは しずかに なにもしない（同じ人が もういちど）
+    render();
+    return;
+  }
+
+  lastMove = { x, y };
+  history.push({ x, y, player: currentPlayer });   // ★ リプレイ用に きろく
+  render();
+  playPlaceSound();                    // ★ おいた瞬間に 碁石の音（mp3）
+
+  if (res.captured.length > 0){
+    // ★ 石を とった！ ―― でも すぐには かちにしない。
+    //    石が おかれて 相手が とられたのを 見せてから、1びょう後に かち。
+    locked = true;                     // このあいだ、あいて（しろ）は おけない
+    winTimer = setTimeout(()=>{
+      gameOver = true;
+      winner = currentPlayer;          // おいた人（くろ）の かち
+      locked = false;
+      render();
+      beep(true);                      // かちの音
+    }, 1000);
+  } else {
+    // てばんこうたい
+    currentPlayer = (currentPlayer === BLACK) ? WHITE : BLACK;
+    render();
+    maybeCpuTurn();                    // つぎが コンピュータなら 少し待って うつ
+  }
+}
+
+/* つぎが コンピュータの ばんなら、少し ま をおいて うたせる */
+function maybeCpuTurn(){
+  if (mode !== "cpu") return;
+  if (gameOver || locked) return;
+  if (currentPlayer !== cpuColor) return;
+  if (cpuTimer) clearTimeout(cpuTimer);
+  cpuTimer = setTimeout(cpuTurn, 650);   // 「かんがえてるよ」の ま
+}
+
+/* コンピュータが 一手 うつ */
+function cpuTurn(){
+  cpuTimer = null;
+  if (mode !== "cpu" || gameOver || locked || currentPlayer !== cpuColor) return;
+  const mv = chooseCpuMove(cpuLevel);
+  if (!mv){ return; }                    // うつ所がない（めったにない）
+  makeMove(mv.x, mv.y);
+}
+
+/* =======================================================================
+   ★ コンピュータの あたま（CPU）
+     ふれあい囲碁は「さきに 1つでも とったら かち」。だから コンピュータは
+       1) とれる手があれば すぐ とる（＝かち）
+       2) つぎに きみに とられそうな手は さける
+       3) きみの 石を おいつめる（呼吸点をへらす／アタリにする）
+       4) それ以外は 石の ちかくに うつ
+     を かんがえます。じっさいの盤は かえず、コピーばんで ためします。
+   ----------------------------------------------------------------------- */
+
+// ある盤で player が「とれる手（かちになる手）」を もっているか？
+function hasCaptureMove(bd, player){
+  for (let y = 0; y < SIZE; y++){
+    for (let x = 0; x < SIZE; x++){
+      if (bd[y][x] !== EMPTY) continue;
+      const copy = cloneBoard(bd);
+      const r = applyMoveTo(copy, x, y, player);
+      if (r.ok && r.captured.length > 0) return true;
+    }
+  }
+  return false;
+}
+
+// player の うてる手 ぜんぶ（コピーばん つき）
+function legalMoves(bd, player){
+  const moves = [];
+  for (let y = 0; y < SIZE; y++){
+    for (let x = 0; x < SIZE; x++){
+      if (bd[y][x] !== EMPTY) continue;
+      const copy = cloneBoard(bd);
+      const r = applyMoveTo(copy, x, y, player);
+      if (r.ok) moves.push({ x, y, captured: r.captured.length, after: copy });
+    }
+  }
+  return moves;
+}
+
+// となりに 石が いくつ あるか（せっしょく＝たたかいの手 を このむ用）
+function stoneNeighborCount(bd, x, y){
+  let n = 0;
+  for (const [nx, ny] of neighbors(x, y)) if (bd[ny][nx] !== EMPTY) n++;
+  return n;
+}
+
+// (x,y) は (tx,ty) の たてよこ の となり か？
+function isAdjacentTo(x, y, tx, ty){
+  return (Math.abs(x - tx) + Math.abs(y - ty)) === 1;
+}
+
+// (x,y) の たてよこ どなりに、その色の石が あるか？
+function hasColorNeighbor(bd, x, y, color){
+  for (const [nx, ny] of neighbors(x, y)) if (bd[ny][nx] === color) return true;
+  return false;
+}
+
+function randPick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* =======================================================================
+   ★ つよい レベル ―― 数手 先読み（ミニマックス ＋ αβ枝刈り）
+     ふれあい囲碁は「1つ とったら 即かち」なので、先読みの木は
+     とった時点で うちきり。だから 数手でも じゅうぶん つよくなり、
+       ・両アタリ（1手で 2つを ねらう）
+       ・みじかい シチョウ（にげても つかまる 形）
+       ・自分の石が とられる 形
+     を 読んで さけたり ねらったり できます。
+     ※読む ふかさ SEARCH_DEPTH を あげるほど 手ごわく なります。
+   ----------------------------------------------------------------------- */
+const SEARCH_DEPTH = 4;     // 何手 先まで 読むか（つよい）
+const WIN_SCORE = 1000000;  // 「とった＝かち」のてん数
+
+// 「考える場所」＝ どれかの石の まわり（8方向）の 空点だけ。盤ぜんぶは 見ない。
+function candidatePoints(bd){
+  const set = new Set();
+  let anyStone = false;
+  for (let y = 0; y < SIZE; y++){
+    for (let x = 0; x < SIZE; x++){
+      if (bd[y][x] === EMPTY) continue;
+      anyStone = true;
+      for (let dy = -1; dy <= 1; dy++){
+        for (let dx = -1; dx <= 1; dx++){
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx, ny = y + dy;
+          if (inBoard(nx, ny) && bd[ny][nx] === EMPTY) set.add(nx + "," + ny);
+        }
+      }
+    }
+  }
+  if (!anyStone){ const c = (SIZE - 1) / 2; return [[c, c]]; }   // 石なし＝まん中
+  return [...set].map(s => s.split(",").map(Number));
+}
+
+// 盤の ねうち（side から見て）。アタリ（呼吸点1）を 中心に すばやく 見る。
+function evalStatic(bd, side){
+  const opp = (side === BLACK) ? WHITE : BLACK;
+  let score = 0, sideCanCapture = false, oppCanCapture = false;
+  const seen = new Set();
+  for (let y = 0; y < SIZE; y++){
+    for (let x = 0; x < SIZE; x++){
+      const v = bd[y][x];
+      if (v === EMPTY) continue;
+      const key = x + "," + y;
+      if (seen.has(key)) continue;
+      const g = getGroup(bd, x, y);
+      for (const [sx, sy] of g.stones) seen.add(sx + "," + sy);
+      const lib = g.liberties.size;
+      const mine = (v === side);
+      if (lib === 1){
+        if (mine){ oppCanCapture = true; score -= 40; }   // 自分がアタリ＝あぶない
+        else     { sideCanCapture = true; score += 40; }  // 相手がアタリ＝ねらえる
+      }
+      score += (mine ? 1 : -1) * Math.min(lib, 4);
+    }
+  }
+  if (sideCanCapture) score += 500;        // 手番の側が すぐ とれる＝ほぼ かち
+  else if (oppCanCapture) score -= 120;     // とられそう
+  return score;
+}
+
+// side の 手を「よさそうな順」に ならべる（とり→アタリ→ふつう）。cap で 数をしぼる。
+function orderedMoves(bd, side, cap){
+  const opp = (side === BLACK) ? WHITE : BLACK;
+  let pts = candidatePoints(bd);
+  // 先に「石のとなりが おおい所」で ざっくり しぼる（計算を かるく）
+  if (pts.length > 14){
+    pts = pts.map(p => ({ p, n: stoneNeighborCount(bd, p[0], p[1]) }))
+             .sort((a, b) => b.n - a.n).slice(0, 14).map(o => o.p);
+  }
+  const list = [];
+  for (const [x, y] of pts){
+    if (bd[y][x] !== EMPTY) continue;
+    const nb = cloneBoard(bd);
+    const r = applyMoveTo(nb, x, y, side);
+    if (!r.ok) continue;
+    let prio, capWin = (r.captured.length > 0);
+    if (capWin){ prio = 100000; }
+    else {
+      prio = 0;
+      for (const [nx, ny] of neighbors(x, y)){
+        if (nb[ny][nx] === opp){ const g = getGroup(nb, nx, ny); if (g.liberties.size === 1) prio += 100; }
+      }
+      const own = getGroup(nb, x, y);
+      prio += (own.liberties.size === 1) ? -100 : own.liberties.size;
+      prio += Math.random();     // ならびに すこし ばらつき
+    }
+    list.push({ x, y, nb, capWin, prio });
+  }
+  list.sort((a, b) => b.prio - a.prio);
+  return cap ? list.slice(0, cap) : list;
+}
+
+// ネガマックス（side の手番で、side から見た てん数）
+function negamax(bd, side, depth, alpha, beta){
+  const opp = (side === BLACK) ? WHITE : BLACK;
+  const moves = orderedMoves(bd, side, 8);
+  if (moves.length === 0) return 0;
+  let best = -Infinity;
+  for (const m of moves){
+    let val;
+    if (m.capWin){ val = WIN_SCORE - (10 - depth); }        // すぐ とれる＝かち（早いほど◎）
+    else if (depth <= 1){ val = -evalStatic(m.nb, opp); }
+    else { val = -negamax(m.nb, opp, depth - 1, -beta, -alpha); }
+    if (val > best) best = val;
+    if (best > alpha) alpha = best;
+    if (alpha >= beta) break;                                // αβ枝刈り
+  }
+  return best;
+}
+
+// つよい：先読みして いちばん よい手を えらぶ
+function chooseHardMove(){
+  const cpu = cpuColor;
+  const human = (cpu === BLACK) ? WHITE : BLACK;
+  const roots = orderedMoves(board, cpu, 16);
+  if (roots.length === 0){
+    const lm = legalMoves(board, cpu);
+    return lm.length ? { x: randPick(lm).x, y: randPick(lm).y } : null;
+  }
+  // とれる手（かち）が あれば すぐ とる
+  const win = roots.find(m => m.capWin);
+  if (win) return { x: win.x, y: win.y };
+
+  let best = roots[0], bestVal = -Infinity;
+  for (const m of roots){
+    const val = -negamax(m.nb, human, SEARCH_DEPTH - 1, -Infinity, Infinity);
+    if (val > bestVal){ bestVal = val; best = m; }
+  }
+  return { x: best.x, y: best.y };
+}
+
+
+// コンピュータの 一手を えらぶ
+function chooseCpuMove(level){
+  const cpu = cpuColor;
+  const human = (cpu === BLACK) ? WHITE : BLACK;
+  const moves = legalMoves(board, cpu);
+  if (moves.length === 0) return null;
+
+  // (1) とれる手（かち）があれば すぐ とる ―― やさしい・つよい どちらも
+  const winning = moves.filter(m => m.captured > 0);
+  if (winning.length) return randPick(winning);
+
+  // やさしい：とれる手（かち）は とる。それ以外は「きみが いま おいた石の
+  //           となり」に うつ。とんでもない所には うたない。
+  if (level === "easy"){
+    let cand = [];
+
+    // 1) きみが いま おいた石の たてよこ どなり
+    if (lastMove){
+      cand = moves.filter(m => isAdjacentTo(m.x, m.y, lastMove.x, lastMove.y));
+    }
+    // 2) となりが うまっていたら、きみの石 どれかの となり（たたかいの ちかく）
+    if (cand.length === 0){
+      cand = moves.filter(m => hasColorNeighbor(board, m.x, m.y, human));
+    }
+    // 3) それも なければ、どれかの石の となり
+    if (cand.length === 0){
+      cand = moves.filter(m => stoneNeighborCount(board, m.x, m.y) > 0);
+    }
+    // 4) 石が まだ ない（コンピュータの さいしょの一手）→ まん中あたり
+    if (cand.length === 0){
+      const c = (SIZE - 1) / 2;
+      cand = moves.filter(m => Math.abs(m.x - c) <= 2 && Math.abs(m.y - c) <= 2);
+      if (cand.length === 0) cand = moves;
+    }
+
+    // その中で、すぐに とられて まけない手が あれば そちらを えらぶ
+    const safe = cand.filter(m => !hasCaptureMove(m.after, human));
+    return randPick(safe.length ? safe : cand);
+  }
+
+  // つよい：数手 先読みして えらぶ（べつの関数へ）
+  if (level === "hard"){
+    return chooseHardMove();
+  }
+
+  // ふつう：てん数をつけて いちばん よい手をえらぶ（1手先の 守り・攻め）
+  const center = (SIZE - 1) / 2;
+  let best = null, bestScore = -Infinity;
+
+  for (const m of moves){
+    let score = 0;
+    const after = m.after;
+
+    // ―― この手のあと、きみ(human)に「とれる手」があると まけてしまう → 大きく さける
+    if (hasCaptureMove(after, human)) score -= 100000;
+
+    // ―― きみの 連を アタリ（呼吸点1）に できたら うれしい
+    const seen = new Set();
+    for (const [nx, ny] of neighbors(m.x, m.y)){
+      if (after[ny] && after[ny][nx] === human){
+        const g = getGroup(after, nx, ny);
+        const key = g.stones[0][0] + "," + g.stones[0][1];
+        if (seen.has(key)) continue; seen.add(key);
+        if (g.liberties.size === 1) score += 120 + g.stones.length * 8; // アタリ！
+        else score += Math.max(0, 4 - g.liberties.size) * 12;           // 呼吸点をへらす
+      }
+    }
+
+    // ―― じぶんの 石の あんぜん（呼吸点が おおいほどよい。1つは あぶない）
+    const own = getGroup(after, m.x, m.y);
+    const ol = own.liberties.size;
+    if (ol === 1) score -= 60;
+    else score += Math.min(ol, 4) * 6;
+
+    // ―― 石の ちかく／まん中 を すこし このむ
+    score += stoneNeighborCount(board, m.x, m.y) * 7;
+    score -= (Math.abs(m.x - center) + Math.abs(m.y - center)); // まん中よりで +
+    score += Math.random() * 3;                                 // すこし ばらつき
+
+    if (score > bestScore){ bestScore = score; best = m; }
+  }
+  return best;
+}
+
+/* =======================================================================
+   ★ れんしゅう（クイズ）：あと1手で しろが とれる もんだいを つくる
+     ・きみは くろ。しろの 連が「呼吸点1つ（アタリ）」になっていて、
+       その 呼吸点に くろを おくと とれる。その1か所が こたえ。
+   ----------------------------------------------------------------------- */
+
+// つながった しろの かたまり（1〜3こ）を てきとうに つくる
+function growWhiteGroup(){
+  const size = randPick([1, 2, 2, 3, 3]);           // 1〜3こ（2・3を おおめに）
+  const sx = Math.floor(Math.random() * SIZE);
+  const sy = Math.floor(Math.random() * SIZE);
+  const cells = [[sx, sy]];
+  const used = new Set([sx + "," + sy]);
+  let guard = 0;
+  while (cells.length < size && guard++ < 40){
+    const [cx0, cy0] = randPick(cells);
+    const opts = neighbors(cx0, cy0).filter(([nx, ny]) => !used.has(nx + "," + ny));
+    if (opts.length === 0) continue;
+    const [nx, ny] = randPick(opts);
+    used.add(nx + "," + ny); cells.push([nx, ny]);
+  }
+  return cells;
+}
+
+// もんだいを 1つ つくる → { board, answer:{x,y}, size } / だめなら null
+function makePuzzle(){
+  for (let attempt = 0; attempt < 300; attempt++){
+    const b = [];
+    for (let y = 0; y < SIZE; y++) b.push(new Array(SIZE).fill(EMPTY));
+
+    const cells = growWhiteGroup();
+    for (const [x, y] of cells) b[y][x] = WHITE;
+
+    // しろの連の 呼吸点（あいてる となり）を あつめる
+    const g = getGroup(b, cells[0][0], cells[0][1]);
+    const libs = [...g.liberties].map(s => s.split(",").map(Number));
+    if (libs.length < 1) continue;
+
+    // 1つを「こたえ」に のこし、のこりを くろで うめる → しろは アタリ
+    const answer = randPick(libs);
+    for (const [lx, ly] of libs){
+      if (lx === answer[0] && ly === answer[1]) continue;
+      b[ly][lx] = BLACK;
+    }
+
+    // かくにん：しろの連の 呼吸点が ちょうど1つ（＝こたえ）
+    const g2 = getGroup(b, cells[0][0], cells[0][1]);
+    if (g2.liberties.size !== 1) continue;
+
+    // かくにん：こたえに くろを おくと ほんとうに とれる
+    const test = cloneBoard(b);
+    const r = applyMoveTo(test, answer[0], answer[1], BLACK);
+    if (!(r.ok && r.captured.length > 0)) continue;
+
+    return { board: b, answer: { x: answer[0], y: answer[1] }, size: cells.length, type: "capture" };
+  }
+  return null;
+}
+
+/* -----------------------------------------------------------------------
+   ★ にげる（まもる）れんしゅう：あと1手で くろが とられる もんだいを つくる
+     ・くろの 連が「呼吸点1つ（アタリ）」になっていて、そのたった1つの
+       のこった呼吸点（にげ道）に くろを おくと、呼吸点が2つ以上に なって
+       にげ切れる。その1か所が こたえ。
+     ・「とる手」がある形（にげる いがいの正解ができる形）や、にげても
+       また呼吸点1つのまま（シチョウのように おいかけられる形）は はじく。
+   ----------------------------------------------------------------------- */
+function makeEscapePuzzle(){
+  for (let attempt = 0; attempt < 500; attempt++){
+    const b = [];
+    for (let y = 0; y < SIZE; y++) b.push(new Array(SIZE).fill(EMPTY));
+
+    // つながった くろの かたまり（1〜3こ）
+    const cells = growWhiteGroup();
+    for (const [x, y] of cells) b[y][x] = BLACK;
+
+    // くろの連の 呼吸点をあつめる（にげ道を1つ のこすため 2つ以上 いる）
+    const g = getGroup(b, cells[0][0], cells[0][1]);
+    const libs = [...g.liberties].map(s => s.split(",").map(Number));
+    if (libs.length < 2) continue;
+
+    // 1つを「にげ道（こたえ）」にのこし、のこりを しろで うめる → くろは アタリ
+    const answer = randPick(libs);
+    for (const [lx, ly] of libs){
+      if (lx === answer[0] && ly === answer[1]) continue;
+      b[ly][lx] = WHITE;
+    }
+
+    // かくにん：くろの連の 呼吸点が ちょうど1つ（＝こたえ）
+    const g2 = getGroup(b, cells[0][0], cells[0][1]);
+    if (g2.liberties.size !== 1) continue;
+    const only = [...g2.liberties][0].split(",").map(Number);
+    if (only[0] !== answer[0] || only[1] !== answer[1]) continue;
+
+    // かくにん：くろは どこにも「とる手」がない（にげる いがいの 正解を なくす）
+    if (hasCaptureMove(b, BLACK)) continue;
+
+    // かくにん：こたえに くろを おくと、とらずに にげられる（呼吸点2つ以上）
+    const test = cloneBoard(b);
+    const r = applyMoveTo(test, answer[0], answer[1], BLACK);
+    if (!r.ok) continue;
+    if (r.captured.length !== 0) continue;          // とるのではなく「にげる」もんだいにする
+    const gg = getGroup(test, answer[0], answer[1]);
+    if (gg.liberties.size < 2) continue;            // にげ切れる形だけ のこす
+
+    return { board: b, answer: { x: answer[0], y: answer[1] }, size: cells.length, type: "escape" };
+  }
+  return null;
+}
+
+// あたらしい もんだいを だす
+function newPuzzle(){
+  if (winTimer){ clearTimeout(winTimer); winTimer = null; }
+  if (cpuTimer){ clearTimeout(cpuTimer); cpuTimer = null; }
+  puzzle = (practiceType === "escape") ? makeEscapePuzzle() : makePuzzle();
+  puzzleSolved = false;
+  wrongCount = 0;
+  hintOn = false;
+  gameOver = false;
+  locked = false;
+  lastMove = null;
+  currentPlayer = BLACK;
+  board = puzzle ? cloneBoard(puzzle.board) : (function(){
+    const b = []; for (let y = 0; y < SIZE; y++) b.push(new Array(SIZE).fill(EMPTY)); return b;
+  })();
+  document.getElementById("overlay").classList.remove("show");
+  hideHint();
+  render();
+}
+
+// れんしゅうモードで タップされたとき
+function handlePracticeTap(x, y){
+  if (puzzleSolved || locked) return;             // せいかい後／1びょう待ち中は うけつけない
+  if (board[y][x] !== EMPTY) return;              // 石のある所は むし
+  if (!puzzle) return;
+
+  const test = cloneBoard(board);
+  const r = applyMoveTo(test, x, y, BLACK);        // くろで おいてみる
+
+  // せいかいの じょうけん（とる／にげる で かわる）
+  let correct;
+  if (practiceType === "escape"){
+    // にげる：たった1つの「にげ道」に おけたら せいかい
+    correct = r.ok && x === puzzle.answer.x && y === puzzle.answer.y;
+  } else {
+    // とる：しろを 1つでも とれたら せいかい
+    correct = r.ok && r.captured.length > 0;
+  }
+
+  if (correct){
+    // せいかい！ ―― 石を おいた ようすを 見せてから、
+    //              1びょう後に「せいかい！」画面に する（たいせんと おなじ）。
+    board = test;
+    lastMove = { x, y };
+    hintOn = false;
+    locked = true;                                 // このあいだ タップは きかない
+    render();
+    playPlaceSound();
+    winTimer = setTimeout(() => {
+      puzzleSolved = true;
+      locked = false;
+      correctCount++;
+      updatePracticeCount();
+      render();
+      beep(true);
+    }, 1000);
+  } else {
+    // ちがう
+    wrongCount++;
+    const tooHard = wrongCount >= 2;
+    const msg = (practiceType === "escape")
+      ? (tooHard ? "「💡ヒント」を おしてみてね" : "ちがうよ。くろが にげられる ところは どこかな？")
+      : (tooHard ? "「💡ヒント」を おしてみてね" : "ちがうよ。しろが とれる ところは どこかな？");
+    showHint(msg);
+  }
+}
+
+// ヒント：こたえの ところを しばらく ひからせる
+function showAnswerHint(){
+  if (mode !== "practice" || !puzzle || puzzleSolved) return;
+  hintOn = true;
+  render();
+  clearTimeout(hintMarkTimer);
+  hintMarkTimer = setTimeout(() => { hintOn = false; render(); }, 2500);
+}
+
+// せいかい かず の ひょうじ
+function updatePracticeCount(){
+  const el = document.getElementById("p-correct");
+  if (el) el.textContent = correctCount;
+}
+
+// れんしゅうの しゅるいを かえる（"capture"=とる / "escape"=にげる）
+function setPracticeType(t){
+  practiceType = t;
+  document.getElementById("pt-capture").classList.toggle("active", t === "capture");
+  document.getElementById("pt-escape").classList.toggle("active", t === "escape");
+  if (mode === "practice") newPuzzle();   // その しゅるいの もんだいを だす
+}
+
+/* ===== さいしょから（たいせん用） ===== */
+function resetGame(){
+  stopReplay();
+  if (winTimer){ clearTimeout(winTimer); winTimer = null; }
+  if (cpuTimer){ clearTimeout(cpuTimer); cpuTimer = null; }
+  board = [];
+  for (let y = 0; y < SIZE; y++){
+    board.push(new Array(SIZE).fill(EMPTY));
+  }
+  currentPlayer = BLACK;
+  gameOver = false;
+  locked = false;
+  winner = 0;
+  lastMove = null;
+  history = [];     // ★ きろくを まっさらに
+  document.getElementById("overlay").classList.remove("show");
+  hideHint();
+  render();
+  maybeCpuTurn();   // コンピュータが せんて（くろ）のときは 先に うつ
+}
+
+/* =======================================================================
+   ★ リプレイ：おわった たいせんを、さいしょから 1手ずつ もういちど 見る
+     ・空の ばんから はじめて、きろく(history)の手を じゅんばんに ならべる。
+     ・リプレイちゅうは タップできない（locked）。おわると かち画面に もどる。
+   ======================================================================= */
+function emptyBoard(){
+  const b = []; for (let y = 0; y < SIZE; y++) b.push(new Array(SIZE).fill(EMPTY));
+  return b;
+}
+
+function startReplay(){
+  if (mode === "practice") return;
+  if (!history.length) return;
+  stopReplay();
+  replayActive = true;
+  replayMoves = history.slice();   // その時の きろくを コピー
+  replayStep = 0;
+  gameOver = false;                // かち画面を いったん かくす
+  locked = true;                   // リプレイちゅうは おけない
+  board = emptyBoard();            // 空の ばんから
+  lastMove = null;
+  document.getElementById("overlay").classList.remove("show");
+  render();
+  replayTimer = setTimeout(replayNext, 800);
+}
+
+function replayNext(){
+  if (!replayActive) return;
+  if (replayStep >= replayMoves.length){ endReplay(); return; }
+  const mv = replayMoves[replayStep++];
+  applyMoveTo(board, mv.x, mv.y, mv.player);   // その手を ばんに ならべる（とりも さいげん）
+  lastMove = { x: mv.x, y: mv.y };
+  render();
+  playPlaceSound();
+  replayTimer = setTimeout(replayNext, 800);
+}
+
+function endReplay(){
+  replayActive = false;
+  if (replayTimer){ clearTimeout(replayTimer); replayTimer = null; }
+  gameOver = true;                 // かち画面に もどす（もういちど／リプレイ）
+  locked = false;
+  render();
+  beep(true);
+}
+
+// リプレイを とめる（タイマーも けす）
+function stopReplay(){
+  replayActive = false;
+  if (replayTimer){ clearTimeout(replayTimer); replayTimer = null; }
+}
+
+/* =======================================================================
+   6. 画面びょうが（見ため。ルールとは わけています）
+   ======================================================================= */
+const GAP = 40, MARGIN = 44, R = 17;              // ますのおおきさ・石の半径
+const STARS = [[3,3],[9,3],[3,9],[9,9],[6,6]];    // 13ろばんの星
+const svg = document.getElementById("board");
+
+// 交点の 画面座標
+function cx(i){ return MARGIN + i * GAP; }
+function cy(j){ return MARGIN + j * GAP; }
+
+// 碁ばんの 線と星（さいしょに1回だけ）
+function drawGrid(){
+  let s = "";
+  const min = MARGIN, max = MARGIN + GAP*(SIZE-1);
+  for (let i = 0; i < SIZE; i++){
+    const p = MARGIN + i*GAP;
+    const edge = (i === 0 || i === SIZE-1) ? " edge" : "";
+    s += `<line class="grid-line${edge}" x1="${p}" y1="${min}" x2="${p}" y2="${max}"/>`;
+    s += `<line class="grid-line${edge}" x1="${min}" y1="${p}" x2="${max}" y2="${p}"/>`;
+  }
+  for (const [i, j] of STARS){
+    s += `<circle class="star" cx="${cx(i)}" cy="${cy(j)}" r="3.6"/>`;
+  }
+  return s;
+}
+
+// 石ひとつ の えがき
+function stoneSVG(x, y, color, isLast){
+  const fill = (color === BLACK)
+    ? `<radialGradient id="gb${x}_${y}" cx="35%" cy="30%"><stop offset="0%" stop-color="#6d6d6d"/><stop offset="70%" stop-color="#1c1c1c"/></radialGradient>`
+    : `<radialGradient id="gw${x}_${y}" cx="35%" cy="30%"><stop offset="0%" stop-color="#ffffff"/><stop offset="85%" stop-color="#d7cdb8"/></radialGradient>`;
+  const id = (color === BLACK) ? `gb${x}_${y}` : `gw${x}_${y}`;
+  const stroke = (color === WHITE) ? ' stroke="#b8ab8c" stroke-width="1"' : "";
+  let g = `<defs>${fill}</defs>`;
+  g += `<circle class="stone" cx="${cx(x)}" cy="${cy(y)}" r="${R}" fill="url(#${id})"${stroke}/>`;
+  if (isLast){
+    g += `<circle class="last-mark" cx="${cx(x)}" cy="${cy(y)}" r="${R*0.42}"/>`;
+  }
+  return g;
+}
+
+// タップ用の 大きな とうめいまる（指でおしやすい）
+function drawHits(){
+  let s = "";
+  for (let y = 0; y < SIZE; y++){
+    for (let x = 0; x < SIZE; x++){
+      s += `<circle class="hit" cx="${cx(x)}" cy="${cy(y)}" r="${GAP*0.5}" data-x="${x}" data-y="${y}"/>`;
+    }
+  }
+  return s;
+}
+
+function render(){
+  let s = drawGrid();
+  // 石
+  for (let y = 0; y < SIZE; y++){
+    for (let x = 0; x < SIZE; x++){
+      if (board[y][x] !== EMPTY){
+        const isLast = lastMove && lastMove.x === x && lastMove.y === y;
+        s += stoneSVG(x, y, board[y][x], isLast);
+      }
+    }
+  }
+  // ヒントの しるし（れんしゅうで「💡ヒント」をおしたとき、こたえを ひからせる）
+  if (mode === "practice" && hintOn && puzzle && !puzzleSolved){
+    s += `<circle class="hint-mark" cx="${cx(puzzle.answer.x)}" cy="${cy(puzzle.answer.y)}" r="${R}"/>`;
+  }
+  s += drawHits();
+  svg.innerHTML = s;
+
+  // うえの ひょうじ（バナー）
+  const banner = document.getElementById("banner");
+  const btext  = document.getElementById("banner-text");
+  if (replayActive){
+    banner.className = "banner black";
+    btext.textContent = "🎬 リプレイちゅう…";
+  } else if (mode === "practice"){
+    banner.className = "banner black";
+    if (puzzleSolved){
+      btext.textContent = "せいかい！🎉";
+    } else {
+      btext.textContent = (practiceType === "escape") ? "くろを にがそう！" : "くろで しろを とろう！";
+    }
+  } else if (!gameOver){
+    banner.className = (currentPlayer === BLACK) ? "banner black" : "banner white";
+    if (mode === "cpu"){
+      btext.textContent = (currentPlayer === cpuColor) ? "コンピュータの ばん" : "きみの ばん";
+    } else {
+      btext.textContent = (currentPlayer === BLACK) ? "くろの ばん" : "しろの ばん";
+    }
+  }
+
+  // オーバーレイ（せいかい／かち）の ひょうじ
+  const ov = document.getElementById("overlay");
+  if (mode === "practice" && puzzleSolved){
+    // れんしゅう：せいかい！ → つぎの もんだいへ
+    const okText = (practiceType === "escape") ? "にげられた！" : "せいかい！";
+    ov.innerHTML = `<div class="win-text"><span class="stone-ico b"></span>${okText}</div>
+                    <button class="btn" onclick="newPuzzle()">つぎの もんだい ▶</button>`;
+    ov.classList.add("show");
+  } else if (mode !== "practice" && gameOver){
+    // たいせん：かち！
+    const ico = (winner === BLACK) ? '<span class="stone-ico b"></span>' : '<span class="stone-ico w"></span>';
+    let name;
+    if (mode === "cpu"){
+      name = (winner === cpuColor) ? "コンピュータの かち！" : "きみの かち！";
+    } else {
+      name = (winner === BLACK) ? "くろの かち！" : "しろの かち！";
+    }
+    ov.innerHTML = `<div class="win-text">${ico}${name}</div>
+                    <div class="ov-btns">
+                      <button class="btn" onclick="resetGame()">もう いちど</button>
+                      <button class="btn btn2" onclick="startReplay()">🎬 リプレイ</button>
+                    </div>`;
+    ov.classList.add("show");
+  } else {
+    ov.classList.remove("show");
+  }
+}
+
+/* ===== タップ（クリック）を うけとる ===== */
+svg.addEventListener("click", (e)=>{
+  const t = e.target;
+  if (!t.classList.contains("hit")) return;
+  const x = parseInt(t.getAttribute("data-x"), 10);
+  const y = parseInt(t.getAttribute("data-y"), 10);
+  hideHint();
+  if (mode === "practice"){ handlePracticeTap(x, y); return; }
+  // コンピュータの ばんは 人は おせない
+  if (mode === "cpu" && currentPlayer === cpuColor) return;
+  makeMove(x, y);
+});
+
+/* ===== ヒント表示 ===== */
+let hintTimer = null;
+function showHint(msg){
+  const h = document.getElementById("hint");
+  h.textContent = msg; h.classList.add("show");
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(hideHint, 2000);
+}
+function hideHint(){ document.getElementById("hint").classList.remove("show"); }
+
+/* ===== おと ===== */
+// 碁石を おく音（きょうかしょ指定の mp3）。ネットにつながっていれば なります。
+const PLACE_SOUND_URL = "https://github.com/byakusen/iglge.igo_masutar/raw/refs/heads/main/igo_sound.mp3";
+const placeAudio = new Audio(PLACE_SOUND_URL);
+placeAudio.preload = "auto";
+
+// 碁石を おいたときに ならす
+function playPlaceSound(){
+  try{
+    placeAudio.currentTime = 0;
+    const p = placeAudio.play();
+    if (p && p.catch) p.catch(()=>beep(false));  // mp3がだめなら みじかい音で
+  }catch(e){ beep(false); }
+}
+
+// バックアップ用の おと（mp3がならない・ネットなしのとき／かちの音）
+let actx = null;
+function beep(win){
+  try{
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = actx.currentTime;
+    const notes = win ? [523,659,784,1047] : [660];
+    notes.forEach((f, i)=>{
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      o.connect(g); g.connect(actx.destination);
+      const st = now + i*0.09;
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(win?0.18:0.12, st+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, st+(win?0.25:0.12));
+      o.start(st); o.stop(st+(win?0.3:0.15));
+    });
+  }catch(e){ /* おとが だめでも つづける */ }
+}
+
+/* ===== タブ・せってい の きりかえ ===== */
+
+// モードを かえる（"pvp" / "cpu"）。かえたら 新しいゲームで はじめる。
+function setMode(m){
+  stopReplay();
+  mode = m;
+  document.getElementById("tab-practice").classList.toggle("active", m === "practice");
+  document.getElementById("tab-cpu").classList.toggle("active", m === "cpu");
+  document.getElementById("tab-pvp").classList.toggle("active", m === "pvp");
+  document.getElementById("cpu-options").hidden   = (m !== "cpu");
+  document.getElementById("practice-bar").hidden  = (m !== "practice");
+  document.getElementById("reset-btn").hidden     = (m === "practice"); // れんしゅうは「つぎの もんだい」を つかう
+
+  if (m === "practice"){
+    correctCount = 0;
+    updatePracticeCount();
+    newPuzzle();
+  } else {
+    resetGame();
+  }
+}
+
+// きみの いし を えらぶ（1=くろ せんて / 2=しろ ごて）。コンピュータは はんたいの色。
+function setHumanColor(color){
+  cpuColor = (color === BLACK) ? WHITE : BLACK;
+  document.getElementById("c-black").classList.toggle("active", color === BLACK);
+  document.getElementById("c-white").classList.toggle("active", color === WHITE);
+  if (mode === "cpu") resetGame();
+}
+
+// つよさ を えらぶ（"easy" / "normal" / "hard"）
+function setLevel(lv){
+  cpuLevel = lv;
+  document.getElementById("l-easy").classList.toggle("active", lv === "easy");
+  document.getElementById("l-normal").classList.toggle("active", lv === "normal");
+  document.getElementById("l-hard").classList.toggle("active", lv === "hard");
+  if (mode === "cpu") resetGame();
+}
+
+// ===== スタート =====
+setMode("practice");   // さいしょは「れんしゅう」タブ
+
+/* ==== 動作かくにん（ブラウザのコンソールで実行）：じさつ手・とり =====
+   ・くろ が しろ を１つ かこむと「くろの かち！」になる。
+   ・じぶんが とられる場所は「そこには おけないよ」でおけない。
+*/
+</script>
+</body>
+</html>
